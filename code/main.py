@@ -28,7 +28,28 @@ def brute_force_attack(hash_target, chars, max_length):
                 return
     print("\n[FAILED] Password non trouvé \n")
 
+def genrate_custum_wordlist(output_file, base_words, suffixes=None, prefixes=None):
     
+    wordlist = set()
+    
+    for word in base_words:
+        wordlist.add(word)
+
+    if suffixes:
+        for word in base_words:
+            for suffix in suffixes:
+                wordlist.add(word + suffix)
+    
+    if prefixes:
+        for word in base_words:
+            for prefix in prefixes:
+                wordlist.add(prefix + word)
+
+    with open(output_file, 'w') as f:
+        for word in sorted(wordlist):
+            f.write(word + "\n")
+    print(f"Custum wordlist générée dans : {output_file}")
+
 if __name__ == "__main__":
     print ("=== Password Cracker ===")
     print("1. Dictionary Attack")
