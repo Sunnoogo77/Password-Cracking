@@ -1,2 +1,220 @@
 AES
 DES
+
+
+Je vois exactement où tu veux en venir, et je trouve ton approche **très bien structurée et évolutive**. **Tu veux créer un véritable "Rule Processing System"**, un **système de transformation avancé** basé sur des **règles prédéfinies et activables à la demande**.  
+
+Tu veux :  
+1. **Un ensemble de fonctions de transformation** (capitalisation, duplication, suppression, insertion, etc.).  
+2. **Un système de gestion des règles (Rule Processing System)** qui permet d'appeler ces transformations dynamiquement.  
+3. **Une manière d’exécuter ces règles sur une wordlist** et de générer **une wordlist enrichie**.  
+
+👉 **C’est une très bonne idée**, et ça nous rapproche encore plus de la logique utilisée par **Hashcat et John the Ripper**, deux outils de référence pour le cracking de mots de passe.  
+
+---
+
+## **Plan d’action structuré**
+Nous allons organiser **`RuleApplyer.py`** en plusieurs parties :
+1. **Définition des fonctions de transformation**  
+   - Basées sur tes catégories (capitalisation, suppression, duplication, etc.).
+2. **Création d’un Rule Processing System**  
+   - Un dictionnaire pour mapper les **codes de règles** vers les **fonctions associées**.  
+   - Un deuxième dictionnaire pour gérer **le nombre d’arguments** requis par chaque règle.  
+3. **Lecture d’une wordlist existante et application dynamique des règles**  
+   - L'utilisateur choisit les règles à appliquer.  
+   - Le système applique automatiquement les transformations sur chaque mot.  
+   - Les nouveaux mots sont enregistrés dans un fichier de sortie.  
+
+---
+
+# **1. Implémentation des fonctions de transformation**
+On commence par créer les **fonctions principales** pour appliquer les règles :
+
+```python
+import string
+
+# === STRING TRANSFORMATIONS ===
+
+# Capitalisation
+def lowerString(curString):  
+    return curString.lower()
+
+def upperString(curString):  
+    return curString.upper()
+
+def capitalizeString(curString):  
+    return curString.capitalize()
+
+def invertCapitalize(curString):  
+    return curString[0].lower() + curString[1:].upper() if len(curString) > 1 else curString.lower()
+
+def toggleString(curString):  
+    return curString.swapcase()
+
+# Supprimer caractères
+def truncateLeft(curString):  
+    return curString[1:] if len(curString) > 1 else ""
+
+def truncateRight(curString):  
+    return curString[:-1] if len(curString) > 1 else ""
+
+# Répétition
+def duplicateString(curString):  
+    return curString * 2
+
+def duplicateStringNtimes(curString, n):  
+    return curString * n
+
+def duplicateFirst(curString, n):  
+    return curString[0] * n + curString
+
+def duplicateLast(curString, n):  
+    return curString + curString[-1] * n
+
+# Miroir
+def reflectString(curString):  
+    return curString + curString[::-1]
+
+# Insertion et remplacement
+def appendCharacter(curString, char):  
+    return curString + char
+
+def prependCharacter(curString, char):  
+    return char + curString
+
+def insertCharacterAtPos(curString, p, char):  
+    if p >= len(curString):
+        return curString + char
+    return curString[:p] + char + curString[p:]
+
+def replaceCharacter(curString, target, replacement):  
+    return curString.replace(target, replacement)
+
+# Inverser une chaîne
+def reverseString(curString):  
+    return curString[::-1]
+```
+
+---
+
+# **2. Création du Rule Processing System**
+On crée **un dictionnaire** pour mapper les **codes de règles** vers les fonctions associées, ainsi qu’un **dictionnaire pour gérer le nombre d’arguments** requis par chaque fonction.
+
+```python
+# Mapping des règles aux fonctions
+ruleList = {
+    "l": lowerString,
+    "u": upperString,
+    "c": capitalizeString,
+    "i": invertCapitalize,
+    "t": toggleString,
+    "trL": truncateLeft,
+    "trR": truncateRight,
+    "d": duplicateString,
+    "dN": duplicateStringNtimes,
+    "df": duplicateFirst,
+    "dl": duplicateLast,
+    "r": reflectString,
+    "a": appendCharacter,
+    "p": prependCharacter,
+    "ins": insertCharacterAtPos,
+    "rep": replaceCharacter,
+    "rev": reverseString
+}
+
+# Nombre d'arguments requis par chaque règle
+ruleCountList = {
+    "l": 1, "u": 1, "c": 1, "i": 1, "t": 1, "trL": 1, "trR": 1, "d": 1,
+    "dN": 2, "df": 2, "dl": 2, "r": 1, "a": 2, "p": 2, "ins": 3, "rep": 3, "rev": 1
+}
+```
+
+---
+
+# **3. Application dynamique des règles sur une wordlist**
+L’utilisateur pourra choisir une liste de **règles à appliquer** et le système appliquera les transformations correspondantes sur une **wordlist**.
+
+```python
+import os
+
+def apply_rules_on_word(word, rules):
+    """
+    Applique une liste de règles sur un mot donné.
+    """
+    modified_words = set()
+    modified_words.add(word)  # Ajouter le mot original
+
+    for rule in rules:
+        if rule in ruleList:
+            func = ruleList[rule]
+            num_args = ruleCountList[rule]
+
+            if num_args == 1:  # Fonction prenant un seul argument
+                modified_words.add(func(word))
+            elif num_args == 2:  # Fonction prenant deux arguments
+                if rule == "a":  # Append
+                    modified_words.add(func(word, "!"))
+                elif rule == "p":  # Prepend
+                    modified_words.add(func(word, "#"))
+                elif rule == "df" or rule == "dl":  # Duplicate First/Last
+                    modified_words.add(func(word, 2))
+            elif num_args == 3:  # Fonction prenant trois arguments
+                if rule == "ins":  # Insert
+                    modified_words.add(func(word, 1, "_"))
+                elif rule == "rep":  # Replace
+                    modified_words.add(func(word, "a", "@"))
+
+    return modified_words
+
+def process_wordlist(input_file, output_file, rules):
+    """
+    Applique une série de règles sur une wordlist.
+    """
+    if not os.path.exists(input_file):
+        print(f"[ERROR] Fichier non trouvé : {input_file}")
+        return
+    
+    modified_words = set()
+
+    with open(input_file, "r", encoding="utf-8") as infile:
+        for line in infile:
+            word = line.strip()
+            modified_words.update(apply_rules_on_word(word, rules))
+
+    with open(output_file, "w", encoding="utf-8") as outfile:
+        for word in sorted(modified_words):
+            outfile.write(word + "\n")
+
+    print(f"[SUCCESS] Fichier généré : {output_file}")
+
+if __name__ == "__main__":
+    input_file = input("Entrez le fichier contenant la wordlist : ").strip()
+    rules = input("Entrez les règles à appliquer (ex: l,u,d): ").strip().split(",")
+    output_file = "Output/modified_wordlist.txt"
+    
+    process_wordlist(input_file, output_file, rules)
+```
+
+---
+
+# **4. Explication du code**
+- **L’utilisateur choisit les règles** qu’il veut appliquer.
+- **Le script charge la wordlist et applique dynamiquement les transformations** sur chaque mot.
+- **Les mots transformés sont enregistrés dans un fichier de sortie** (`Output/modified_wordlist.txt`).
+
+---
+
+# **5. Résumé**
+✅ **Tu as maintenant un système complet de gestion des règles**.  
+✅ **L’utilisateur peut activer les règles de son choix dynamiquement**.  
+✅ **Le fichier généré est prêt pour une attaque par dictionnaire**.  
+
+---
+
+# **6. Prochaine étape**
+**Test ce fichier avec une wordlist existante.**  
+Une fois validé, on passera à **`passwordCracker.py`** pour utiliser cette wordlist dans **une vraie attaque** ! 🚀  
+
+---
+
+💡 **Que penses-tu de cette implémentation ?** 😊
