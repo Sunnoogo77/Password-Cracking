@@ -59,8 +59,10 @@ class passwordCracker:
                 self.numCracked += 1
                 self.outputFile.write(plainTextPassword+"\n")
                 self.passwordList.remove(password)
+                
             if len(self.passwordList) == 0:
                 return True
+        return False
 
     
     def setAppendMask(self, am :str):
@@ -91,12 +93,20 @@ class passwordCracker:
                 if not self.checkMask(plainTextPassword):
                     if self.passwordCheck(plainTextPassword):
                         return True
-            return False
+        return False
     
     def ruleAttack(self, keyspace, min_length=0, max_length=1) -> bool:
         for i in range(min_length, max_length):
             for ruleString in self.ruleList:
                 lengthAttempt = itertools.product(keyspace, repeat=i+1)
+                generatedWords = ["".join(word) for word in lengthAttempt]
+                
+                transformedWords = self.applyRules(generatedWords, ruleString)
+                
+                for word in transformedWords:
+                    if self.passwordCheck(word):
+                        return True
+        return False
     
     def bruteForce(self, keyspace, min_length=0, max_length=1):
         print("Running Brute Force ... ")
@@ -162,8 +172,12 @@ class passwordCracker:
     def maskAttack(self, mask: str, prefix="", suffix="", *customFileName):
         print("Running Mask Attack ... ")
         maskList = self.createMaskList(mask, customFileName)
-        script = self.createMaskScript(maskList, prefix, suffix)
-        exec(script)
+
+        for combination in itertools.product(*maskList):  
+            plainTextPassword = prefix + "".join(combination) + suffix
+            if self.passwordCheck(plainTextPassword):
+                return True  
+
     
     def applyRules(self, wordList: list, ruleString: str) -> list:
         transformedWords = []
@@ -180,6 +194,10 @@ class passwordCracker:
                     transformedWord = transformedWord[::-1]
                 elif rule == "d":  # Dupliquer
                     transformedWord = transformedWord + transformedWord
+                elif rule == "T":  # Inverser la casse à une position spécifique
+                    position = 2  # Exemple : on pourrait rendre ça dynamique
+                    transformedWord = toggleStringAtPos(transformedWord, str(position))
+
                 elif rule == "t":  # Inverser la casse (toggle case)
                     transformedWord = ''.join(
                         c.upper() if c.islower() else c.lower() for c in transformedWord

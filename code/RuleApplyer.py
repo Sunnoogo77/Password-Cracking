@@ -115,14 +115,12 @@ def extractSubstring(curString: str, startPos: chr, endPos: chr) -> str:
     return curString[sPos:ePos]
 
 def omitSubstring(curString: str, startPos: chr, endPos: chr) -> str:
-    # Omit a substring
     sPos = charToInt(startPos)
     ePos = charToInt(endPos) + 1
-    if sPos > ePos:
-        return curString
-    if sPos < ePos:
+    if sPos > ePos:  
         raise Exception("Error: Starting position cannot come after ending position")
     return curString[:sPos] + curString[ePos:]
+
 
 def insertCharacterAtPos(curString: str, p: chr, char: chr) -> str:
     # Insert a character at a specific position
@@ -173,34 +171,33 @@ def duplicateAll(curString: str) -> str:
 #Rule list
 # Dictionary mapping rule symbols to their corresponding functions
 ruleList = {
-    ":": nothingString,          # No transformation
-    "l": lowerString,            # Convert to lowercase
-    "u": upperString,            # Convert to uppercase
-    "c": capitilizeString,       # Capitalize the first letter
-    "C": invertCapitalize,       # Invert capitalization
-    "t": toggleString,           # Toggle case of all characters
-    "T": toggleStringAtPos,      # Toggle case at a specific position
-    "r": reverseString,          # Reverse the string
-    "d": duplicateString,        # Duplicate the string
-    "D": duplicateStringNtimes,  # Duplicate the string N times
-    "R": reflectString,          # Reflect the string
-    "L": rotateLeftString,       # Rotate the string to the left
-    "R": rotateRightString,      # Rotate the string to the right
-    "a": appendCharacter,        # Append a character
-    "p": prependCharacter,       # Prepend a character
-    "t": truncateRight,          # Truncate the string from the right
-    "D": deleteAtPos,            # Delete character at a specific position
-    "E": extractSubstring,       # Extract a substring
-    "O": omitSubstring,          # Omit a substring
-    "I": insertCharacterAtPos,   # Insert a character at a specific position
-    "O": overwriteCharacterAtPos,# Overwrite character at a specific position
-    "T": truncateFromPos,        # Truncate the string from a specific position
-    "R": replaceCharacter,       # Replace a character
-    "P": purgeString,            # Remove all instances of a character
-    "F": duplicateFirst,         # Duplicate the first character
-    "N": duplicateFirstNChars,   # Duplicate the first N characters
-    "L": duplicateLast,          # Duplicate the last character
-    "A": duplicateAll            # Duplicate all characters
+    ":": nothingString,
+    "l": lowerString,
+    "u": upperString,
+    "c": capitilizeString,
+    "C": invertCapitalize,
+    "t": toggleString,
+    "T": toggleStringAtPos,
+    "r": reverseString,
+    "d": duplicateString,
+    "D": duplicateStringNtimes,
+    "f": reflectString,  
+    "{": rotateLeftString,  
+    "}": rotateRightString,  
+    "a": appendCharacter,
+    "p": prependCharacter,
+    "]": truncateRight,
+    "E": extractSubstring,
+    "O": omitSubstring,
+    "I": insertCharacterAtPos,
+    "o": overwriteCharacterAtPos,
+    "'": truncateFromPos,
+    "s": replaceCharacter,
+    "@": purgeString,
+    "F": duplicateFirst,
+    "N": duplicateFirstNChars,
+    "L": duplicateLast,
+    "A": duplicateAll
 }
 
 # Dictionary mapping rule symbols to the number of arguments they require
