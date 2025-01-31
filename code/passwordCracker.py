@@ -57,7 +57,7 @@ class passwordCracker:
         return password
     
     # Function to compare passwords based on the selected hash type
-    def comparePasswords(self, possiblePassword: str, password: str):
+    def comparePasswords(self, possiblePassword: str, password: str) -> bool:
         if self.hashNumber == passwordCracker.BCRYPT:
             try:
                 return bcrypt.checkpw(possiblePassword.encode('utf-8'), password.encode('utf-8'))
