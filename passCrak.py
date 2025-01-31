@@ -3,16 +3,12 @@ from RuleApplyer import *
 from urllib.request import urlopen, hashlib
 import hashlib
 import bcrypt
-from concurrent.futures import ThreadPoolExecutor
 
-# Function to read file content and return as list of lines
-def getFileInfo(filePath: str):
-    try:
-        with open(filePath, "r") as file:
-            return file.read().splitlines()
-    except FileNotFoundError:
-        print(f"❌ Erreur : Fichier {filePath} introuvable.")
-        return []
+
+def getFileInfo(filePath :str):
+    with open(filePath, "r") as file:
+        return file.read().splitlines()
+
 
 class passwordCracker:
     NO_HASH = 0
@@ -20,7 +16,7 @@ class passwordCracker:
     MD5 = 2
     BCRYPT = 3
     
-    def __init__(self, inputPasswordFile: str, oFile: str):
+    def __init__(self, inputPasswordFile :str, oFile :str):
         self.passwordList = getFileInfo(inputPasswordFile)
         self.outputFile = open(oFile, "w+", encoding="utf-8")
         self.hashNumber = passwordCracker.NO_HASH
@@ -30,25 +26,14 @@ class passwordCracker:
         self.ruleList = []
         self.numCracked = 0
 
-    # Setters for various configurations
-    def setHashNum(self, num: int):
+    def setHashNum(self, num :int):
         self.hashNumber = num
     
-    def setVerboseMode(self, verboseMode: bool):
+    def setVerboseMode(self, verboseMode :bool):
         self.verbose = verboseMode
-
-    def setAppendMask(self, am: str):
-        self.appendMask = am
     
-    def setPrependMask(self, pm: str):
-        self.prependMask = pm
-    
-    def setRuleList(self, rl: list):
-        self.ruleList = rl
-
-    # Function to get hash of a password based on the selected hash type
-    def getHash(self, password: str):
-        if self.verbose:
+    def getHash(self, password :str):
+        if(self.verbose):
             print(f"Trying to crack password: {password}")
         if self.hashNumber == passwordCracker.SHA1:
             return hashlib.sha1(password.encode('utf-8')).hexdigest()
@@ -56,73 +41,73 @@ class passwordCracker:
             return hashlib.md5(password.encode('utf-8')).hexdigest()
         return password
     
-    # Function to compare passwords based on the selected hash type
-    def comparePasswords(self, possiblePassword: str, password: str):
-        if self.hashNumber == passwordCracker.BCRYPT:
+    def comparePasswords(self, possiblePassword :str, password :str):
+        if (self.hashNumber == passwordCracker.BCRYPT):
             try:
                 return bcrypt.checkpw(possiblePassword.encode('utf-8'), password.encode('utf-8'))
             except ValueError as e:
-                print(f"⚠️ Erreur : Mot de passe non valide pour BCRYPT : {password}")
                 print(f"Error: {e}")
                 return False
         return possiblePassword == password
     
-    # Function to check if a plain text password matches any hashed password in the list
     def passwordCheck(self, plainTextPassword):
         possiblePassword = self.getHash(plainTextPassword)
         
         for password in self.passwordList:
             if self.comparePasswords(possiblePassword, password):
-                print(f"\n✅ Mot de passe trouvé : {plainTextPassword} 🎉\n")
+                print("-- :) --- Cracked: " + plainTextPassword)
                 self.numCracked += 1
-                self.outputFile.write(plainTextPassword + "\n")
+                self.outputFile.write(plainTextPassword+"\n")
                 self.passwordList.remove(password)
                 
             if len(self.passwordList) == 0:
                 return True
         return False
 
-    # Function to check if masks are set and perform mask attack
+    
+    def setAppendMask(self, am :str):
+        self.appendMask = am
+    
+    def setPrependMask(self, pm :str):
+        self.prependMask = pm
+    
     def checkMask(self, plainTextPassword) -> bool:
-        if not self.appendMask and not self.prependMask:
+        if(len(self.appendMask) == 0 and len(self.prependMask) == 0):
             return False
-        if len(self.appendMask) != 0:
+        if(len(self.appendMask) != 0):
             self.maskAttack(self.appendMask, plainTextPassword)
-        if len(self.prependMask) != 0:
+        if(len(self.prependMask) != 0):
             self.maskAttack(self.prependMask, "", plainTextPassword)
         return True
     
-    # Function to try a single password
-    def try_password(self, password):
-        if self.passwordCheck(password):
-            return True
-        return False
+    def setRuleList(self, rl :list):
+        self.ruleList = rl
     
-    # Function to perform normal brute force attack
+    
     def normalBruteForce(self, keyspace, min_length=0, max_length=1) -> bool:
         for i in range(min_length, max_length):
-            with ThreadPoolExecutor(max_workers=4) as executor:
-                results = executor.map(self.passwordCheck, 
-                                    (''.join(attempt) for attempt in itertools.product(keyspace, repeat=i+1)))
-                if any(results):
-                    return True  
+            lengthAttempt = itertools.product(keyspace, repeat=i+1)
+            for attempt in lengthAttempt:
+                plainTextPassword = ''.join(attempt)
+                
+                if not self.checkMask(plainTextPassword):
+                    if self.passwordCheck(plainTextPassword):
+                        return True
         return False
-
-    # Function to perform rule-based attack
+    
     def ruleAttack(self, keyspace, min_length=0, max_length=1) -> bool:
         for i in range(min_length, max_length):
             for ruleString in self.ruleList:
                 lengthAttempt = itertools.product(keyspace, repeat=i+1)
                 generatedWords = ["".join(word) for word in lengthAttempt]
                 
-                transformedWords = self.ruleEnhancer(ruleString, generatedWords)
+                transformedWords = self.applyRules(generatedWords, ruleString)
                 
                 for word in transformedWords:
                     if self.passwordCheck(word):
                         return True
         return False
     
-    # Function to perform brute force attack with or without rules
     def bruteForce(self, keyspace, min_length=0, max_length=1):
         print("Running Brute Force ... ")
         if len(self.ruleList) != 0:
@@ -130,10 +115,13 @@ class passwordCracker:
         else:
             self.normalBruteForce(keyspace, min_length, max_length)
     
-    # Function to create mask list from mask string
+    
+    
+
     def createMaskList(self, mask: str, *customFileName) -> list:
         maskList = []
         for i in range(0, len(mask), 2): 
+
             if mask[i:i+2] == "?l":  
                 maskList.append(getFileInfo("Resources/lowercases.txt"))
             elif mask[i:i+2] == "?u": 
@@ -156,59 +144,74 @@ class passwordCracker:
                 for j in range(10):  
                     if mask[i:i+2] == ("?" + str(j)):
                         try:
-                            maskList.append(getFileInfo("Resources/" + customFileName[j] + ".txt"))
+                            maskList.append(getFileInfo("Resources/"+customFileName[j]+".txt"))
                         except IndexError:
                             print(f"Erreur : Fichier personnalisé introuvable pour {j}.")
                             continue
+
         return maskList
     
-    # Function to perform mask attack
+    def createMaskScript(self, maskList: list, prefix="", suffix="") -> str:
+        s = ""
+        variableList = getFileInfo("Resources/lowercases_uppercases.txt")
+
+        for i in range(len(maskList)):
+            var_name = variableList[i % len(variableList)]
+            s += f"for {var_name} in maskList[{i}]:\n"
+            s += "\t" * (i+1)
+        
+        s += "plainTextPassword =  " + " + ".join(
+            [variableList[i % len(variableList)] for i in range(len(maskList))]
+        ) + "\n"
+        
+        s += "\t" * len(maskList) + f"if self.passwordCheck(prefix + plainTextPassword + suffix):\n"
+        s += "\t" * (len(maskList)+1) + "exit()\n"
+        
+        return s
+    
     def maskAttack(self, mask: str, prefix="", suffix="", *customFileName):
         print("Running Mask Attack ... ")
-        maskList = self.createMaskList(mask, *customFileName)
+        maskList = self.createMaskList(mask, customFileName)
 
-        with ThreadPoolExecutor(max_workers=4) as executor:
-            results = executor.map(
-                self.passwordCheck,
-                (prefix + "".join(combination) + suffix for combination in itertools.product(*maskList))
-            ) 
-            
-            if any(results):
-                print("f\n✅ Mot de passe trouvé avec Mask Attack 🎉\n")
-                return True
-        
-        return False
+        for combination in itertools.product(*maskList):  
+            plainTextPassword = prefix + "".join(combination) + suffix
+            if self.passwordCheck(plainTextPassword):
+                return True  
 
-    # Function to enhance words based on rules
-    def ruleEnhancer(self, ruleString: str, wordList: list) -> list:
-        ruleCounter = 0  
-        while ruleCounter < len(ruleString):
-            rule = ruleString[ruleCounter]
-            ruleCounter += ruleCountList.get(rule, 1)  
-            nextWordList = []
+    
+    def applyRules(self, wordList: list, ruleString: str) -> list:
+        transformedWords = []
 
-            for word in wordList:
-                func = ruleList.get(rule, None)
-                if func is None:
-                    print(f"⚠️ Règle inconnue : {rule}")
-                    continue  
-                    
-                if rule in ruleCountList and ruleCountList[rule] > 1:
-                    args = ruleString[ruleCounter - ruleCountList[rule] + 1: ruleCounter]
-                    transformedWord = func(word, *args)
+        for word in wordList:
+            transformedWord = word  # Mot de départ
+
+            for rule in ruleString:
+                if rule == "u":  # Mettre en majuscules
+                    transformedWord = transformedWord.upper()
+                elif rule == "l":  # Mettre en minuscules
+                    transformedWord = transformedWord.lower()
+                elif rule == "r":  # Inverser le mot
+                    transformedWord = transformedWord[::-1]
+                elif rule == "d":  # Dupliquer
+                    transformedWord = transformedWord + transformedWord
+                elif rule == "T":  # Inverser la casse à une position spécifique
+                    position = 2  # Exemple : on pourrait rendre ça dynamique
+                    transformedWord = toggleStringAtPos(transformedWord, str(position))
+
+                elif rule == "t":  # Inverser la casse (toggle case)
+                    transformedWord = ''.join(
+                        c.upper() if c.islower() else c.lower() for c in transformedWord
+                    )
+                elif rule == "$":  # Ajouter un caractère à la fin
+                    transformedWord += "!"
+                elif rule == "^":  # Ajouter un caractère au début
+                    transformedWord = "@" + transformedWord
                 else:
-                    transformedWord = func(word)
+                    print(f"⚠️ Règle inconnue : {rule}")
 
-                if not self.checkMask(transformedWord):  
-                    nextWordList.append(transformedWord)
+            transformedWords.append(transformedWord)
 
-                    if self.passwordCheck(transformedWord):
-                        return True
+        return transformedWords
 
-            if not wordList:
-                print("⚠️ Aucun mot de passe n'a pu être transformé avec les règles fournies.")
-                return []
-            else:
-                wordList = nextWordList
-
-        return wordList
+    
+    
