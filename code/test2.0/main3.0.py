@@ -55,7 +55,7 @@ class CrackingWorker(QThread):
                 self.maskStr
             )
 
-        self.update_signal.emit(f"✅ Crack terminé ! Résultats enregistrés dans {self.cracker.outputFile}")
+        self.update_signal.emit(f"✅ Crack completed! Results are saved file you entered as output file")
 
 
 # Interface Graphique
@@ -70,6 +70,10 @@ class Menu(QWidget):
         self.inputFile = ""
         self.outputFile = ""
         self.mode = Menu.BRUTE_FORCE
+        self.methodInput = ""
+        self.rules = ""
+        self.appendMask = ""
+        self.prependMask = ""
         self.dictionaryFile = ""
         self.customWordlistFile = ""
         self.ruleString = ""
@@ -78,91 +82,6 @@ class Menu(QWidget):
         self.setupUI()
 
     def setupUI(self):
-        # self.setGeometry(200, 20, 600, 500)
-        # self.setWindowTitle('Password Cracker')
-
-        # layout = QGridLayout()
-        # self.setLayout(layout)
-
-        # # Modes d'attaque
-        # methodGroup = QButtonGroup()
-        # attackModes = [("Brute Force", Menu.BRUTE_FORCE), ("Dictionnaire", Menu.DICTIONARY), ("Custom Dictionnaire", Menu.CUSTOM_DICTIONARY), ("Hybride (Full Attack)", Menu.HYBRID)]
-
-        # for i, (label, mode) in enumerate(attackModes):
-        #     radioButton = QRadioButton(label)
-        #     radioButton.methodNum = mode
-        #     if i == 0:
-        #         radioButton.setChecked(True)
-        #     radioButton.toggled.connect(self.selectAttackMode)
-        #     methodGroup.addButton(radioButton, i)
-        #     layout.addWidget(radioButton, 0, i)
-
-        # # Sélection des fichiers
-        # self.inputBtn = QPushButton("Fichier d'entrée")
-        # self.inputBtn.clicked.connect(self.getInputFile)
-        # layout.addWidget(self.inputBtn, 1, 0, 1, 2)
-
-        # self.outputBtn = QPushButton("Fichier de sortie")
-        # self.outputBtn.clicked.connect(self.getOutputFile)
-        # layout.addWidget(self.outputBtn, 1, 0, 1, 3)
-        
-        # # Sélection du type de Hash
-        # layout.addWidget(QLabel("Type de Hash :"), 3, 0)
-        # self.hashDropdown = QComboBox(self)
-        # self.hashDropdown.addItem("Aucun", QVariant(passwordCracker.NO_HASH))
-        # self.hashDropdown.addItem("SHA1", QVariant(passwordCracker.SHA1))
-        # self.hashDropdown.addItem("MD5", QVariant(passwordCracker.MD5))
-        # self.hashDropdown.addItem("bcrypt", QVariant(passwordCracker.BCRYPT))
-        # layout.addWidget(self.hashDropdown, 3, 1)
-
-        # # Keyspace basé sur CharacterCreator
-        # layout.addWidget(QLabel("Keyspace :"), 3, 1)
-        # self.keyspaceDropdown = QComboBox()
-
-        # # Charger les fichiers du dossier Resources
-        # resources_path = "Resources"
-        # if os.path.exists(resources_path):
-        #     for file in os.listdir(resources_path):
-        #         if file.endswith(".txt"):
-        #             self.keyspaceDropdown.addItem(file.replace(".txt", ""), os.path.join(resources_path, file))
-
-        # layout.addWidget(self.keyspaceDropdown, 3, 2)
-
-        # # Longueur minimale et maximale
-        # self.minBox = QSpinBox()
-        # self.minBox.setRange(1, 10)
-        # layout.addWidget(QLabel("Min Longueur"), 4, 0)
-        # layout.addWidget(self.minBox, 4, 1)
-
-        # self.maxBox = QSpinBox()
-        # self.maxBox.setRange(1, 10)
-        # layout.addWidget(QLabel("Max Longueur"), 5, 0)
-        # layout.addWidget(self.maxBox, 5, 1)
-
-        # # Fichier dictionnaire
-        # self.dictionaryBtn = QPushButton("Fichier Dictionnaire")
-        # self.dictionaryBtn.clicked.connect(self.getDictionaryFile)
-        # layout.addWidget(self.dictionaryBtn, 6, 0, 1, 2)
-
-        # # Fichier Custom Wordlist
-        # self.customWordlistBtn = QPushButton("Custom Wordlist")
-        # self.customWordlistBtn.clicked.connect(self.getCustomWordlistFile)
-        # layout.addWidget(self.customWordlistBtn, 7, 0, 1, 2)
-
-        # # Règles de transformation
-        # layout.addWidget(QLabel("Règles de transformation (ex: ldut) :"), 8, 0)
-        # self.ruleInput = QLineEdit()
-        # layout.addWidget(self.ruleInput, 8, 1)
-
-        # # Résultats
-        # self.resultText = QTextEdit()
-        # self.resultText.setReadOnly(True)
-        # layout.addWidget(self.resultText, 9, 0, 2, 2)
-
-        # # Bouton pour démarrer l'attaque
-        # self.startBtn = QPushButton("Démarrer l'attaque")
-        # self.startBtn.clicked.connect(self.startCrack)
-        # layout.addWidget(self.startBtn, 10, 0, 1, 2)
         
         self.setWindowTitle("Password Cracker")  # Titre de la fenêtre
         layout = QVBoxLayout()  # Layout principal vertical
@@ -176,7 +95,7 @@ class Menu(QWidget):
 
         self.methodGroup = QButtonGroup()
         attack_modes = [("Brute Force", Menu.BRUTE_FORCE), ("Dictionnaire", Menu.DICTIONARY),
-                       ("Custom Dictionnaire", Menu.CUSTOM_DICTIONARY), ("Hybride (Full Attack)", Menu.HYBRID)]
+                    ("Custom Dictionnaire", Menu.CUSTOM_DICTIONARY), ("Hybride (Full Attack)", Menu.HYBRID)]
 
         for i, (label, mode) in enumerate(attack_modes):
             radio_button = QRadioButton(label)
@@ -304,6 +223,8 @@ class Menu(QWidget):
             return
 
         cracker = passwordCracker(self.inputFile, self.outputFile)
+        cracker.setHashNum(self.hashDropdown.currentData())  # ✅ Important
+
         self.worker = CrackingWorker(
             cracker,
             self.mode,
@@ -324,3 +245,4 @@ if __name__ == '__main__':
     window = Menu()
     window.show()
     sys.exit(app.exec_())
+    
