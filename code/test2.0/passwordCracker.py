@@ -48,6 +48,15 @@ class passwordCracker:
     
     def setRuleList(self, rl: list):
         self.ruleList = rl
+        
+    def loadKeyspaceFromFile(filePath :str) -> str:
+        try:
+            with open(filePath, 'r', encoding='utf-8') as file:
+                keyspace = ''.join(line.strip() for line in file if line.strip())
+            return keyspace
+        except FileNotFoundError:
+            print(f"❌ Fichier {filePath} introuvable.")
+            return ""
 
     # Function to get hash of a password based on the selected hash type
     def getHash(self, password: str):
@@ -294,15 +303,16 @@ class passwordCracker:
         print("\n🚀 Lancement de l'attaque par dictionnaire classique...\n")
         
         try:
-            with open(dictionaryFile, 'r', encoding='utf-8') as file:
+            with open(dictionaryFile, 'r', encoding='latin-1') as file:
                 for word in file:
                     word = word.strip()
                     if self.passwordCheck(word):
                         if len(self.passwordList) == 0 and len(self.bcrypt_hashes) == 0:
                             print("✅ Tous les mots de passe ont été trouvés via l'attaque par dictionaire.")
                             return True
-                print("❌ Mot de passe non trouvé dans le dictionaire entée en paramètre")
                 return False
+            print("❌ Mot de passe non trouvé dans le dictionaire entée en paramètre")
+            
         except FileNotFoundError:
             print(f"❌ Fichier dictionaire {dictionaryFile} introuvable")
             return False
@@ -356,3 +366,5 @@ class passwordCracker:
         
         print("❌ L'attaque hybride n'a pas permis de trouver tous les mots de passe.")
         return False
+    
+    
