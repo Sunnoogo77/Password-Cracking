@@ -29,6 +29,10 @@ class passwordCracker:
         self.prependMask = []
         self.ruleList = []
         self.numCracked = 0
+        self.bcrypt_hashes = []
+        self.load_bcrypt_hashes(inputPasswordFile)
+        self.stop_attack = False
+
     # Setters for various configurations
     def setHashNum(self, num: int):
         self.hashNumber = num
@@ -55,31 +59,106 @@ class passwordCracker:
             return hashlib.md5(password.encode('utf-8')).hexdigest()
         return password
     
+    def load_bcrypt_hashes(self, inputPasswordFile):
+        try:
+            with open(inputPasswordFile, 'r') as f:
+                for line in f:
+                    hash_str = line.strip()
+                    try:
+                        bcrypt_hash = hash_str.encode('latin-1')
+                        self.bcrypt_hashes.append(bcrypt_hash)
+                    except UnicodeEncodeError:
+                        print(f"Erreur d'encodage pour le hash : {hash_str}")
+        except FileNotFoundError:
+            print(f"❌ Erreur : Fichier {inputPasswordFile} INTROUVABLE.")
+    
     # Function to compare passwords based on the selected hash type
-    def comparePasswords(self, possiblePassword: str, password: str) -> bool:
+    # def comparePasswords(self, plainTextPassword: str, hashed_password: bytes | str) -> bool:
+    #     if self.hashNumber != passwordCracker.BCRYPT:
+    #         possible_hash =  self.getHash(plainTextPassword)
+    #         return possible_hash == hashed_password
+    #     else :
+    #         try:
+    #             encoded_password = plainTextPassword.encode('utf-8')
+    #             return bcrypt.checkpw(encoded_password, hashed_password)
+    #         except (ValueError, TypeError) as e:
+    #             print(f"⚠️ Erreur : Impossible de vérifier le mot de passe BCRYPT : {e}")
+    #             return False
+    def comparePasswords(self, possiblePassword: str, hashed_password: bytes | str) -> bool:
         if self.hashNumber == passwordCracker.BCRYPT:
             try:
-                return bcrypt.checkpw(possiblePassword.encode('utf-8'), password.encode('utf-8'))
-            except ValueError as e:
-                print(f"⚠️ Erreur : Mot de passe non valide pour BCRYPT : {password}")
-                print(f"Error: {e}")
+                encoded_password = possiblePassword.encode('utf-8')
+                return bcrypt.checkpw(encoded_password, hashed_password)
+            except (ValueError, TypeError) as e:
+                print(f"⚠️ Erreur : Impossible de vérifier le mot de passe BCRYPT : {e}")
                 return False
-        return possiblePassword == password
+        elif isinstance(hashed_password, str):
+            return possiblePassword == hashed_password  # ✅ Correction ici
+        else:
+            return False
+
+
+            
+    
+    
     
     # Function to check if a plain text password matches any hashed password in the list
-    def passwordCheck(self, plainTextPassword):
-        possiblePassword = self.getHash(plainTextPassword)
+    # def passwordCheck(self, plainTextPassword):
+    #     if self.hashNumber == passwordCracker.BCRYPT:
+    #         for bcrypt_hash in list(self.bcrypt_hashes):
+    #             if self.comparePasswords(plainTextPassword, bcrypt_hash):
+    #                 print(f"✅ Mot de passe trouvé : {plainTextPassword}")
+    #                 self.numCracked += 1
+    #                 self.outputFile.write(plainTextPassword + "\n")
+    #                 self.outputFile.flush()
+    #                 self.bcrypt_hashes.remove(bcrypt_hash)
+                    
+    #                 if not self.bcrypt_hashes:
+    #                     return True
+    #         return False
         
-        for password in self.passwordList:
-            if self.comparePasswords(possiblePassword, password):
-                print(f"\n✅ Mot de passe trouvé : {plainTextPassword} 🎉\n")
-                self.numCracked += 1
-                self.outputFile.write(plainTextPassword + "\n")
-                self.passwordList.remove(password)
+    #     else:
+    #         possiblePassword = self.getHash(plainTextPassword)
+    #         for password in list(self.passwordList):
+    #             if self.comparePasswords(possiblePassword, password):
+    #                 print(f"✅ Mot de passe trouvé : {plainTextPassword}")
+    #                 self.numCracked += 1
+    #                 self.outputFile.write(plainTextPassword + "\n")
+    #                 self.outputFile.flush()
+    #                 self.passwordList.remove(password)
+                    
+    #             if len(self.passwordList) == 0:
+    #                 return True
+    #         return False
+    def passwordCheck(self, plainTextPassword):
+        if self.hashNumber == passwordCracker.BCRYPT:
+            for bcrypt_hash in list(self.bcrypt_hashes):
+                if self.comparePasswords(plainTextPassword, bcrypt_hash):
+                    print(f"✅ Mot de passe trouvé : {plainTextPassword}")
+                    self.numCracked += 1
+                    self.outputFile.write(plainTextPassword + "\n")
+                    self.outputFile.flush()
+                    self.bcrypt_hashes.remove(bcrypt_hash)
+                    
+                    if not self.bcrypt_hashes:
+                        return True
+            return False
+        
+        else:
+            possiblePassword = self.getHash(plainTextPassword)  # ✅ Génération du hash ici
+            for password in list(self.passwordList):
+                if self.comparePasswords(possiblePassword, password):  # ✅ Comparaison directe
+                    print(f"✅ Mot de passe trouvé : {plainTextPassword}")
+                    self.numCracked += 1
+                    self.outputFile.write(plainTextPassword + "\n")
+                    self.outputFile.flush()
+                    self.passwordList.remove(password)
+                    
+                if len(self.passwordList) == 0:
+                    return True
                 
-            if len(self.passwordList) == 0:
-                return True
-        return False
+            return False
+
 
     # Function to check if masks are set and perform mask attack
     def checkMask(self, plainTextPassword) -> bool:
@@ -99,31 +178,30 @@ class passwordCracker:
     
     # Function to perform normal brute force attack
     def normalBruteForce(self, keyspace, min_length=0, max_length=1) -> bool:
+        print("\n🚀 Lancement de l'attaque par brute force...\n")
+        
         for i in range(min_length, max_length):
-            with ThreadPoolExecutor(max_workers=4) as executor:
-                results = executor.map(self.passwordCheck, 
-                                    (''.join(attempt) for attempt in itertools.product(keyspace, repeat=i+1)))
-                if any(results):
-                    return True  
+            for attempt in itertools.product(keyspace, repeat=i + 1):
+                password = ''.join(attempt)
+                if self.passwordCheck(password):
+                    return True
         return False
 
     # Function to perform rule-based attack
     def ruleAttack(self, keyspace, min_length=0, max_length=1) -> bool:
         for i in range(min_length, max_length):
             for ruleString in self.ruleList:
-                lengthAttempt = itertools.product(keyspace, repeat=i+1)
-                generatedWords = ["".join(word) for word in lengthAttempt]
-                
-                transformedWords = self.ruleEnhancer(ruleString, generatedWords)
-                
-                for word in transformedWords:
-                    if self.passwordCheck(word):
-                        return True
+                for attempt in itertools.product(keyspace, repeat=i + 1):
+                    word = "".join(attempt)
+                    transformedWords = self.ruleEnhancer(ruleString, [word])
+                    for transformedWord in transformedWords:
+                        if self.passwordCheck(transformedWord):
+                            return True
         return False
     
     # Function to perform brute force attack with or without rules
     def bruteForce(self, keyspace, min_length=0, max_length=1):
-        print("Running Brute Force ... ")
+        print("\n \t \t ==== > _Running Brute Force ... ")
         if len(self.ruleList) != 0:
             self.ruleAttack(keyspace, min_length, max_length)
         else:
@@ -211,3 +289,70 @@ class passwordCracker:
                 wordList = nextWordList
 
         return wordList
+    
+    def dictionaryAttack(self, dictionaryFile: str) -> bool:
+        print("\n🚀 Lancement de l'attaque par dictionnaire classique...\n")
+        
+        try:
+            with open(dictionaryFile, 'r', encoding='utf-8') as file:
+                for word in file:
+                    word = word.strip()
+                    if self.passwordCheck(word):
+                        if len(self.passwordList) == 0 and len(self.bcrypt_hashes) == 0:
+                            print("✅ Tous les mots de passe ont été trouvés via l'attaque par dictionaire.")
+                            return True
+                print("❌ Mot de passe non trouvé dans le dictionaire entée en paramètre")
+                return False
+        except FileNotFoundError:
+            print(f"❌ Fichier dictionaire {dictionaryFile} introuvable")
+            return False
+    
+    def customDictionaryAttack(self, baseWordlistFile: str, ruleString: str) -> bool:
+        print("\n🚀 Lancement de l'attaque par dictionnaire customisé avec des règles...\n")
+
+        try:
+            # Chargement de la liste de base
+            with open(baseWordlistFile, 'r', encoding='utf-8') as file:
+                baseWords = [word.strip() for word in file]
+
+            # Application des règles de transformation
+            customWordlist = self.ruleEnhancer(ruleString, baseWords)
+
+            # Vérification des mots transformés
+            for word in customWordlist:
+                if self.passwordCheck(word):
+                    if len(self.passwordList) == 0 and len(self.bcrypt_hashes) == 0:
+                        print("\n \t ✅ Tous les mots de passe ont été trouvés via l'attaque par dictionnaire customisé.\n")
+                        return True
+
+            print("\n \t ❌ Mot de passe non trouvé après transformation.\n")
+            return False
+
+        except FileNotFoundError:
+            print(f"\n \t ❌ Fichier {baseWordlistFile} introuvable.\n")
+            return False
+
+        
+    def hybridAttack(self, dictionaryFile: str, customWordlistFile: str, ruleString :str, keyspace :str, min_length :int, max_length :int, mask :str = ""):
+        print("\n \t🔥 Lancement de l'attaque hybride (FULL ATTACK MODE)... 🔥")
+        print("\n \t🔥 .................................................... 🔥")
+        
+        print("\n \t \t1️⃣ Étape 1 :🔎  Dictionnaire classique...")
+        if self.dictionaryAttack(dictionaryFile):
+            return True
+        
+        print("\n \t \t2️⃣ Étape 2 : 🔎 Dictionnaire customisé (avec transformations)...")
+        if self.customDictionaryAttack(customWordlistFile, ruleString):
+            return True
+        
+        if mask:
+            print("\n \t \t3️⃣ Étape 3 :🔎 Attaque par masque...")
+            if self.maskAttack(mask):
+                return True
+        
+        print("\n \t \t⚡ Étape 4 : Brute Force en dernier recours...")
+        if self.bruteForce(keyspace, min_length, max_length):
+            return True
+        
+        print("❌ L'attaque hybride n'a pas permis de trouver tous les mots de passe.")
+        return False

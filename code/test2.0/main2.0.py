@@ -27,7 +27,7 @@ class CrackingWorker(QThread):
         else:
             self.cracker.maskAttack(self.maskStr)
 
-        self.update_signal.emit(f"✅ Crack completed! Results saved in {self.cracker.outputFile}")
+        self.update_signal.emit(f"✅ Crack completed! Results are saved file you entered as output file")
 
 
 class Menu(QWidget):
