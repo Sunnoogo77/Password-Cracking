@@ -443,32 +443,74 @@ Pour mieux comprendre le fonctionnement de **Password Cracker**, voici des scén
 
 ---
 
-## 🗂️ **Diagrammes UML (Architecture du Système)**  
+## **📊 Explications des Diagrammes UML**
 
-Pour offrir une meilleure compréhension de la structure interne de **Password Cracker**, cette section présente des diagrammes UML détaillant les différentes composantes du projet :  
+### **1️⃣ Diagramme de Cas d’Utilisation (Use Case)**
+![Use Case Diagram](diagrams/useCase.png)
+#### 📌 **Objectif :**  
+Ce diagramme montre les **interactions** entre l’utilisateur et le système. Il représente **les différents scénarios d'utilisation** du programme.  
 
-1. **Diagramme de Cas d'Utilisation (Use Case Diagram)**  
-   - Illustre les interactions entre l'utilisateur et les différentes fonctionnalités de l'application.  
-
-2. **Diagramme de Classes (Class Diagram)**  
-   - Présente la structure des classes principales (`passwordCracker`, `RuleApplyer`, etc.) et leurs relations.  
-
-3. **Diagramme d'Objets (Object Diagram)**  
-   - Montre des instances spécifiques des classes en action lors d'une session de cracking.  
-
-4. **Diagrammes de Séquence (Sequence Diagrams)**  
-   - Décrivent le déroulement des attaques selon différents scénarios :  
-     - Attaque par Force Brute  
-     - Attaque par Dictionnaire  
-     - Attaque par Masque  
-     - Attaque Hybride  
-
-5. **Diagramme d'Activité (Activity Diagram)**  
-   - Met en avant le flux logique des opérations lors de l'exécution de l'application.  
-
-> ⚠️ *Les diagrammes seront intégrés et commentés dans cette section pour expliquer les mécanismes internes du programme.*  
+#### 📌 **Explication :**  
+- **L’utilisateur** peut choisir entre **différentes méthodes d’attaque** :  
+  - 🔥 **Brute Force** : Génération de toutes les combinaisons possibles.  
+  - 📖 **Dictionnaire** : Teste des mots de passe d’une wordlist.  
+  - 🛠 **Custom Dictionnaire** : Applique des règles sur une wordlist pour générer de nouveaux mots.  
+  - 🎭 **Masque** : Génère des mots de passe suivant un modèle défini.  
+  - 🧬 **Hybride** : Combine toutes les méthodes pour maximiser l’efficacité.  
+- **L’utilisateur** interagit avec l’interface **PyQt5**, qui contrôle la logique du `passwordCracker`.  
+- Le système gère les fichiers **(input/output, dictionnaire, masques, etc.)**.  
 
 ---
+
+### **2️⃣ Diagramme de Classe**
+![Class Diagram](docs/class_diagram.png)
+#### 📌 **Objectif :**  
+Ce diagramme détaille **les classes, leurs attributs et méthodes, ainsi que leurs relations**.  
+
+#### 📌 **Explication :**  
+- La **classe `passwordCracker`** gère **toutes les attaques** et l’application des règles.  
+- La **classe `Menu`** (interface graphique) contrôle **les interactions utilisateur**.  
+- La **classe `CrackingWorker`** permet **d’exécuter les attaques en parallèle** pour ne pas bloquer l’interface.  
+- La **classe `RuleApplyer`** applique **des transformations sur les mots de passe** dans les attaques par règles.  
+- La **classe `CreatCharacter`** génère **les keyspaces et masques pour les attaques**.  
+
+Chaque méthode est représentée avec **son rôle précis**, permettant de comprendre comment **le code est structuré**.  
+
+---
+
+### **3️⃣ Diagrammes de Séquence**
+
+Ces diagrammes expliquent **comment les fonctions interagissent entre elles** pour chaque type d'attaque.  
+
+#### **📌 Séquence 1 : Attaque Brute Force**
+![Class Diagram](diagrams/class_diagram.png)
+- L’interface (`Menu`) **lance une attaque brute force**.  
+- `passwordCracker.bruteForce()` **génère toutes les combinaisons possibles** et les teste une par une.  
+- Chaque mot de passe est **haché avec SHA1/MD5/Bcrypt** et comparé aux mots de passe stockés.  
+- **Si une correspondance est trouvée**, elle est enregistrée et affichée.  
+- **Si aucun mot de passe ne correspond**, l’attaque continue jusqu’à épuisement des possibilités.  
+
+#### **📌 Séquence 2 : Attaque par Dictionnaire**
+![Class Diagram](docs/class_diagram.png)
+- `passwordCracker.dictionaryAttack()` **charge une wordlist** et teste chaque mot de passe.  
+- Chaque mot est **haché et comparé** avec les mots de passe cibles.  
+- **Si une correspondance est trouvée, le mot de passe est enregistré.**  
+- **L’attaque s’arrête si tous les mots de passe sont trouvés ou si la wordlist est épuisée.**  
+
+#### **📌 Séquence 3 : Attaque par Masque**
+![Class Diagram](docs/class_diagram.png)
+- `passwordCracker.maskAttack()` génère **des mots de passe selon un modèle défini** (`?u?l?d`).  
+- Il teste **toutes les combinaisons possibles** à partir des caractères définis.  
+- **Chaque mot généré est comparé aux mots de passe stockés** jusqu’à trouver une correspondance.  
+
+#### **📌 Séquence 4 : Attaque Custom Dictionnaire**
+![Class Diagram](docs/class_diagram.png)
+- `passwordCracker.customDictionaryAttack()` applique **des règles de transformation** aux mots d’un dictionnaire.  
+- **Exemple :** "password" peut devenir "p@ssw0rd" selon les règles définies.  
+- Il teste ensuite les mots transformés **comme une attaque dictionnaire**.  
+
+---
+
 
 ## 🚀 **Fonctionnalités Avancées et Perspectives d’Évolution**  
 
