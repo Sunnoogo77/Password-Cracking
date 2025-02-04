@@ -43,6 +43,9 @@ class CrackingWorker(QThread):
 
         elif self.mode == Menu.CUSTOM_DICTIONARY:
             self.cracker.customDictionaryAttack(self.customWordlistFile, self.ruleString)
+        
+        elif self.mode == Menu.MASK:
+            self.cracker.maskAttack(self.maskStr)
 
         elif self.mode == Menu.HYBRID:
             self.cracker.hybridAttack(
@@ -64,6 +67,7 @@ class Menu(QWidget):
     DICTIONARY = 1
     CUSTOM_DICTIONARY = 2
     HYBRID = 3
+    MASK = 4
 
     def __init__(self):
         super().__init__()
@@ -95,7 +99,7 @@ class Menu(QWidget):
 
         self.methodGroup = QButtonGroup()
         attack_modes = [("Brute Force", Menu.BRUTE_FORCE), ("Dictionnaire", Menu.DICTIONARY),
-                    ("Custom Dictionnaire", Menu.CUSTOM_DICTIONARY), ("Hybride (Full Attack)", Menu.HYBRID)]
+                    ("Custom Dictionnaire", Menu.CUSTOM_DICTIONARY), ("Mask Attack", Menu.MASK), ("Hybride", Menu.HYBRID)]
 
         for i, (label, mode) in enumerate(attack_modes):
             radio_button = QRadioButton(label)
@@ -167,6 +171,12 @@ class Menu(QWidget):
         options_layout.addWidget(QLabel("Règles de transformation (ex: ldut) :"), 6, 0)
         self.ruleInput = QLineEdit()
         options_layout.addWidget(self.ruleInput, 6, 1)
+        
+        # Masques
+        options_layout.addWidget(QLabel("Masque (ex: ?u?l?d):"), 7, 0)
+        self.maskInput = QLineEdit()
+        options_layout.addWidget(self.maskInput, 7, 1)
+
 
 
         # Zone de résultats
@@ -210,6 +220,34 @@ class Menu(QWidget):
         if filePath:
             self.customWordlistFile = filePath
 
+    # def startCrack(self):
+    #     keyspaceFile = self.keyspaceDropdown.currentData()
+    #     keyspace = loadKeyspaceFromFile(keyspaceFile)
+
+    #     min_length = self.minBox.value()
+    #     max_length = self.maxBox.value()
+    #     ruleString = self.ruleInput.text()
+
+    #     if not self.inputFile or not self.outputFile:
+    #         self.resultText.setText("⚠️ Sélectionnez un fichier d'entrée et un fichier de sortie avant de commencer.")
+    #         return
+
+    #     cracker = passwordCracker(self.inputFile, self.outputFile)
+    #     cracker.setHashNum(self.hashDropdown.currentData())  # ✅ Important
+
+    #     self.worker = CrackingWorker(
+    #         cracker,
+    #         self.mode,
+    #         keyspace,
+    #         min_length,
+    #         max_length,
+    #         "",
+    #         self.dictionaryFile,
+    #         self.customWordlistFile,
+    #         ruleString
+    #     )
+    #     self.worker.update_signal.connect(self.resultText.append)
+    #     self.worker.start()
     def startCrack(self):
         keyspaceFile = self.keyspaceDropdown.currentData()
         keyspace = loadKeyspaceFromFile(keyspaceFile)
@@ -217,13 +255,14 @@ class Menu(QWidget):
         min_length = self.minBox.value()
         max_length = self.maxBox.value()
         ruleString = self.ruleInput.text()
+        maskStr = self.maskInput.text() 
 
         if not self.inputFile or not self.outputFile:
             self.resultText.setText("⚠️ Sélectionnez un fichier d'entrée et un fichier de sortie avant de commencer.")
             return
 
         cracker = passwordCracker(self.inputFile, self.outputFile)
-        cracker.setHashNum(self.hashDropdown.currentData())  # ✅ Important
+        cracker.setHashNum(self.hashDropdown.currentData())
 
         self.worker = CrackingWorker(
             cracker,
@@ -231,7 +270,7 @@ class Menu(QWidget):
             keyspace,
             min_length,
             max_length,
-            "",
+            maskStr,
             self.dictionaryFile,
             self.customWordlistFile,
             ruleString

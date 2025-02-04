@@ -15,12 +15,14 @@ def getFileInfo(filePath: str):
         return []
 
 class passwordCracker:
+    # Constants for different hash types
     NO_HASH = 0
     SHA1 = 1
     MD5 = 2
     BCRYPT = 3
     
     def __init__(self, inputPasswordFile: str, oFile: str):
+        # Initialize with input password file and output file
         self.passwordList = getFileInfo(inputPasswordFile)
         self.outputFile = open(oFile, "w+", encoding="utf-8")
         self.hashNumber = passwordCracker.NO_HASH
@@ -80,19 +82,7 @@ class passwordCracker:
                         print(f"Erreur d'encodage pour le hash : {hash_str}")
         except FileNotFoundError:
             print(f"❌ Erreur : Fichier {inputPasswordFile} INTROUVABLE.")
-    
-    # Function to compare passwords based on the selected hash type
-    # def comparePasswords(self, plainTextPassword: str, hashed_password: bytes | str) -> bool:
-    #     if self.hashNumber != passwordCracker.BCRYPT:
-    #         possible_hash =  self.getHash(plainTextPassword)
-    #         return possible_hash == hashed_password
-    #     else :
-    #         try:
-    #             encoded_password = plainTextPassword.encode('utf-8')
-    #             return bcrypt.checkpw(encoded_password, hashed_password)
-    #         except (ValueError, TypeError) as e:
-    #             print(f"⚠️ Erreur : Impossible de vérifier le mot de passe BCRYPT : {e}")
-    #             return False
+            
     def comparePasswords(self, possiblePassword: str, hashed_password: bytes | str) -> bool:
         if self.hashNumber == passwordCracker.BCRYPT:
             try:
@@ -105,40 +95,7 @@ class passwordCracker:
             return possiblePassword == hashed_password  # ✅ Correction ici
         else:
             return False
-
-
-            
-    
-    
-    
-    # Function to check if a plain text password matches any hashed password in the list
-    # def passwordCheck(self, plainTextPassword):
-    #     if self.hashNumber == passwordCracker.BCRYPT:
-    #         for bcrypt_hash in list(self.bcrypt_hashes):
-    #             if self.comparePasswords(plainTextPassword, bcrypt_hash):
-    #                 print(f"✅ Mot de passe trouvé : {plainTextPassword}")
-    #                 self.numCracked += 1
-    #                 self.outputFile.write(plainTextPassword + "\n")
-    #                 self.outputFile.flush()
-    #                 self.bcrypt_hashes.remove(bcrypt_hash)
-                    
-    #                 if not self.bcrypt_hashes:
-    #                     return True
-    #         return False
         
-    #     else:
-    #         possiblePassword = self.getHash(plainTextPassword)
-    #         for password in list(self.passwordList):
-    #             if self.comparePasswords(possiblePassword, password):
-    #                 print(f"✅ Mot de passe trouvé : {plainTextPassword}")
-    #                 self.numCracked += 1
-    #                 self.outputFile.write(plainTextPassword + "\n")
-    #                 self.outputFile.flush()
-    #                 self.passwordList.remove(password)
-                    
-    #             if len(self.passwordList) == 0:
-    #                 return True
-    #         return False
     def passwordCheck(self, plainTextPassword):
         if self.hashNumber == passwordCracker.BCRYPT:
             for bcrypt_hash in list(self.bcrypt_hashes):
@@ -216,54 +173,61 @@ class passwordCracker:
         else:
             self.normalBruteForce(keyspace, min_length, max_length)
     
-    # Function to create mask list from mask string
     def createMaskList(self, mask: str, *customFileName) -> list:
         maskList = []
-        for i in range(0, len(mask), 2): 
-            if mask[i:i+2] == "?l":  
-                maskList.append(getFileInfo("Resources/lowercases.txt"))
-            elif mask[i:i+2] == "?u": 
-                maskList.append(getFileInfo("Resources/uppercases.txt"))
-            elif mask[i:i+2] == "?d":  
-                maskList.append(getFileInfo("Resources/digits.txt"))
-            elif mask[i:i+2] == "?s":  
-                maskList.append(getFileInfo("Resources/punctuations.txt"))
-            elif mask[i:i+2] == "?L":  
-                maskList.append(getFileInfo("Resources/lowercases_uppercases.txt"))
-            elif mask[i:i+2] == "?ld":  
-                maskList.append(getFileInfo("Resources/lowercases_digits.txt"))
-            elif mask[i:i+2] == "?ud": 
-                maskList.append(getFileInfo("Resources/uppercases_digits.txt"))
-            elif mask[i:i+2] == "?a":  
-                maskList.append(getFileInfo("Resources/letters_digits.txt"))
-            elif mask[i:i+2] == "?A":  
-                maskList.append(getFileInfo("Resources/letters_digits_punctuations.txt"))
+        i = 0 
+
+        while i < len(mask):
+            if mask[i] == '?':
+                token = mask[i:i+3] if i + 2 < len(mask) and mask[i+2].isalpha() else mask[i:i+2]
+                
+                if token == "?l":  
+                    maskList.append(getFileInfo("Resources/lowercases.txt"))
+                elif token == "?u": 
+                    maskList.append(getFileInfo("Resources/uppercases.txt"))
+                elif token == "?d":  
+                    maskList.append(getFileInfo("Resources/digits.txt"))
+                elif token == "?s":  
+                    maskList.append(getFileInfo("Resources/punctuations.txt"))
+                elif token == "?L":  
+                    maskList.append(getFileInfo("Resources/lowercases_uppercases.txt"))
+                elif token == "?ld":  
+                    maskList.append(getFileInfo("Resources/lowercases_digits.txt"))
+                elif token == "?ud": 
+                    maskList.append(getFileInfo("Resources/uppercases_digits.txt"))
+                elif token == "?a":  
+                    maskList.append(getFileInfo("Resources/letters_digits.txt"))
+                elif token == "?A":  
+                    maskList.append(getFileInfo("Resources/letters_digits_punctuations.txt"))
+                elif token.startswith("?") and token[1].isdigit():
+                    index = int(token[1])
+                    if index < len(customFileName):
+                        maskList.append(getFileInfo(f"Resources/{customFileName[index]}.txt"))
+                    else:
+                        print(f"⚠️ Fichier personnalisé introuvable pour l'index {index}.")
+                else:
+                    print(f"⚠️ Masque non reconnu : {token}")
+                
+                i += len(token)
             else:
-                for j in range(10):  
-                    if mask[i:i+2] == ("?" + str(j)):
-                        try:
-                            maskList.append(getFileInfo("Resources/" + customFileName[j] + ".txt"))
-                        except IndexError:
-                            print(f"Erreur : Fichier personnalisé introuvable pour {j}.")
-                            continue
+                i += 1 
+
         return maskList
-    
-    # Function to perform mask attack
+
     def maskAttack(self, mask: str, prefix="", suffix="", *customFileName):
-        print("Running Mask Attack ... ")
+        print("\n \t🚀 Lancement de l'attaque par masque...\n")
         maskList = self.createMaskList(mask, *customFileName)
 
-        with ThreadPoolExecutor(max_workers=4) as executor:
-            results = executor.map(
-                self.passwordCheck,
-                (prefix + "".join(combination) + suffix for combination in itertools.product(*maskList))
-            ) 
-            
-            if any(results):
-                print("f\n✅ Mot de passe trouvé avec Mask Attack 🎉\n")
+        if not maskList:
+            print("❌ Aucun masque valide trouvé. Veuillez vérifier votre masque.")
+            return False
+
+        for combination in itertools.product(*maskList):
+            password = prefix + "".join(combination) + suffix
+            if self.passwordCheck(password):
                 return True
-        
         return False
+
 
     # Function to enhance words based on rules
     def ruleEnhancer(self, ruleString: str, wordList: list) -> list:
@@ -289,7 +253,7 @@ class passwordCracker:
                     nextWordList.append(transformedWord)
 
                     if self.passwordCheck(transformedWord):
-                        return True
+                        print(f"✅ Mot de passe trouvé : {transformedWord}")
 
             if not wordList:
                 print("⚠️ Aucun mot de passe n'a pu être transformé avec les règles fournies.")
@@ -321,14 +285,14 @@ class passwordCracker:
         print("\n🚀 Lancement de l'attaque par dictionnaire customisé avec des règles...\n")
 
         try:
-            # Chargement de la liste de base
+        
             with open(baseWordlistFile, 'r', encoding='utf-8') as file:
                 baseWords = [word.strip() for word in file]
 
-            # Application des règles de transformation
+            
             customWordlist = self.ruleEnhancer(ruleString, baseWords)
 
-            # Vérification des mots transformés
+            
             for word in customWordlist:
                 if self.passwordCheck(word):
                     if len(self.passwordList) == 0 and len(self.bcrypt_hashes) == 0:
@@ -343,7 +307,7 @@ class passwordCracker:
             return False
 
         
-    def hybridAttack(self, dictionaryFile: str, customWordlistFile: str, ruleString :str, keyspace :str, min_length :int, max_length :int, mask :str = ""):
+    def hybridAttack(self, dictionaryFile: str, customWordlistFile: str, ruleString :str, keyspace :str, min_length :int, max_length :int, mask :str):
         print("\n \t🔥 Lancement de l'attaque hybride (FULL ATTACK MODE)... 🔥")
         print("\n \t🔥 .................................................... 🔥")
         
@@ -366,5 +330,4 @@ class passwordCracker:
         
         print("❌ L'attaque hybride n'a pas permis de trouver tous les mots de passe.")
         return False
-    
     
