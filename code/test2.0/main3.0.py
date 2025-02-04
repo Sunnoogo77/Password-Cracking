@@ -219,35 +219,7 @@ class Menu(QWidget):
         filePath, _ = QFileDialog.getOpenFileName(self, 'Sélectionner un fichier custom wordlist', '', "Fichiers texte (*.txt)")
         if filePath:
             self.customWordlistFile = filePath
-
-    # def startCrack(self):
-    #     keyspaceFile = self.keyspaceDropdown.currentData()
-    #     keyspace = loadKeyspaceFromFile(keyspaceFile)
-
-    #     min_length = self.minBox.value()
-    #     max_length = self.maxBox.value()
-    #     ruleString = self.ruleInput.text()
-
-    #     if not self.inputFile or not self.outputFile:
-    #         self.resultText.setText("⚠️ Sélectionnez un fichier d'entrée et un fichier de sortie avant de commencer.")
-    #         return
-
-    #     cracker = passwordCracker(self.inputFile, self.outputFile)
-    #     cracker.setHashNum(self.hashDropdown.currentData())  # ✅ Important
-
-    #     self.worker = CrackingWorker(
-    #         cracker,
-    #         self.mode,
-    #         keyspace,
-    #         min_length,
-    #         max_length,
-    #         "",
-    #         self.dictionaryFile,
-    #         self.customWordlistFile,
-    #         ruleString
-    #     )
-    #     self.worker.update_signal.connect(self.resultText.append)
-    #     self.worker.start()
+            
     def startCrack(self):
         keyspaceFile = self.keyspaceDropdown.currentData()
         keyspace = loadKeyspaceFromFile(keyspaceFile)
