@@ -463,7 +463,7 @@ Ce diagramme montre les **interactions** entre l’utilisateur et le système. I
 ---
 
 ### **2️⃣ Diagramme de Classe**
-![Class Diagram](docs/class_diagram.png)
+![Class Diagram](diagrams/class.png)
 #### 📌 **Objectif :**  
 Ce diagramme détaille **les classes, leurs attributs et méthodes, ainsi que leurs relations**.  
 
@@ -483,7 +483,7 @@ Chaque méthode est représentée avec **son rôle précis**, permettant de comp
 Ces diagrammes expliquent **comment les fonctions interagissent entre elles** pour chaque type d'attaque.  
 
 #### **📌 Séquence 1 : Attaque Brute Force**
-![Class Diagram](diagrams/class_diagram.png)
+![Sequence01 Diagram](diagrams/sequence01.png)
 - L’interface (`Menu`) **lance une attaque brute force**.  
 - `passwordCracker.bruteForce()` **génère toutes les combinaisons possibles** et les teste une par une.  
 - Chaque mot de passe est **haché avec SHA1/MD5/Bcrypt** et comparé aux mots de passe stockés.  
@@ -491,20 +491,20 @@ Ces diagrammes expliquent **comment les fonctions interagissent entre elles** po
 - **Si aucun mot de passe ne correspond**, l’attaque continue jusqu’à épuisement des possibilités.  
 
 #### **📌 Séquence 2 : Attaque par Dictionnaire**
-![Class Diagram](docs/class_diagram.png)
+![Sequence02 Diagram](diagrams/sequence02.png)
 - `passwordCracker.dictionaryAttack()` **charge une wordlist** et teste chaque mot de passe.  
 - Chaque mot est **haché et comparé** avec les mots de passe cibles.  
 - **Si une correspondance est trouvée, le mot de passe est enregistré.**  
 - **L’attaque s’arrête si tous les mots de passe sont trouvés ou si la wordlist est épuisée.**  
 
 #### **📌 Séquence 3 : Attaque par Masque**
-![Class Diagram](docs/class_diagram.png)
+![Sequence03 Diagram](diagrams/sequence03.png)
 - `passwordCracker.maskAttack()` génère **des mots de passe selon un modèle défini** (`?u?l?d`).  
 - Il teste **toutes les combinaisons possibles** à partir des caractères définis.  
 - **Chaque mot généré est comparé aux mots de passe stockés** jusqu’à trouver une correspondance.  
 
 #### **📌 Séquence 4 : Attaque Custom Dictionnaire**
-![Class Diagram](docs/class_diagram.png)
+![Sequence04 Diagram](diagrams/sequence04.png)
 - `passwordCracker.customDictionaryAttack()` applique **des règles de transformation** aux mots d’un dictionnaire.  
 - **Exemple :** "password" peut devenir "p@ssw0rd" selon les règles définies.  
 - Il teste ensuite les mots transformés **comme une attaque dictionnaire**.  
