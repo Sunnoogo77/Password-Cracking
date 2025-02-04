@@ -575,13 +575,15 @@ Cet outil est développé à des **fins éducatives** uniquement.
 L’utilisation de cet outil à des fins malveillantes est **strictement interdite**.  
 Assurez-vous de l’utiliser dans un cadre légal, éthique et contrôlé.  
 
----
 
-## 🤝 **Contributions**  
-Les contributions sont les bienvenues !  
-Si vous souhaitez améliorer l’outil, ouvrez une issue ou proposez une pull request.  
+### 📌 **Inspirations du Projet**  
 
----
+Ce projet s’inspire d’un outil de cracking de mots de passe existant, découvert lors de mes recherches initiales sur la sécurité des mots de passe.  
+**Cependant, l’objectif n’était pas de reproduire, mais de comprendre, améliorer et étendre les fonctionnalités existantes.**  
+
+
+Ce dépôt représente **ma propre version**, développée et affinée après plusieurs tests et ajustements.  
+
 
 ## 📩 **Contact**  
 Pour toute question, suggestion ou collaboration, contactez-moi via [GitHub](https://github.com/Sunnoogo77).  
