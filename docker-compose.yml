@@ -1,0 +1,14 @@
+version: "3.8"
+
+services:
+  password-cracker:
+    build: .
+    container_name: password_cracker
+    volumes:
+      - ./Input:/app/Input
+      - ./Output:/app/Output
+    environment:
+      - DISPLAY=${DISPLAY}
+    stdin_open: true
+    tty: true
+    network_mode: "host"

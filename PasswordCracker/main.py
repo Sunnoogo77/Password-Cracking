@@ -15,6 +15,20 @@ def loadKeyspaceFromFile(filePath: str) -> str:
         print(f"❌ Fichier {filePath} introuvable.")
         return ""
 
+# def loadKeyspaceFromFile(filePath: str) -> str:
+#     try:
+#         print(f"Loading keyspace from file: {filePath}")  # Debugging statement
+#         with open(filePath, 'r', encoding='utf-8') as file:
+#             keyspace = ''.join(line.strip() for line in file if line.strip())
+#         print(f"Loaded keyspace: {keyspace}")  # Debugging statement
+#         return keyspace
+#     except FileNotFoundError:
+#         print(f"❌ Fichier {filePath} introuvable.")
+#         return ""
+#     except Exception as e:
+#         print(f"❌ Erreur lors du chargement du keyspace: {e}")
+#         return ""
+
 
 # Thread pour exécuter l'attaque sans bloquer l'interface
 class CrackingWorker(QThread):
